@@ -1,55 +1,14 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include <errno.h>
-#include "modbus.h"
-#include <assert.h>
-#include <errno.h>
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#include <unistd.h>
-#endif
+#include "ZDSM.h"
 
-#define PORT_NAME "/dev/ttyUSB1"
-
-// VALUES THAT CAN BE READ
-int REG_ADDRESS   = 3000;
-int REG_MICROSTEP = 3001;
-int REG_POS_MODE  = 3002;
-int REG_ACC_STEP_H  = 3004; // and 3005 TWO BYTES
-int REG_ACC_PARAM_H = 3006; // and 3007 TWO BYTES
-int REG_INIT_PERIOD = 3008;
-int REG_MAX_PERIOD  = 3009;
-int REG_MAX_DIST_H  = 3010; // and 3011 TWO BYTES
-int REG_ZERO_POS_H  = 3012; // and 3013 TWO BYTES
-int REG_LIM_SW_OFST = 3014; // and 3015 TWO BYTES
-
-int read_value(modbus_t *ctx, int reg_addr);
-float read_fvalue(modbus_t *ctx, int reg_addr);
-int num_bytes(int reg_addr);
-long parse_bytes(uint16_t size_four_array[], int nb);
-float parse_bytes_to_float(uint16_t size_four_array[]);
-uint16_t * unparse_2_bytes(long intNumber);
-uint16_t * unparse_float_to_bytes(float f);
-uint16_t * unparse_4_bytes(long intNumber);
-
-int main(int argc, char *argv[])
-{
-    int ret;
-    float retf;
-    uint16_t *table;
-    uint16_t *table__;
-    uint16_t *table_0;
-    uint16_t *table_1;
-    modbus_t *mb;
+// Constructor
+ZDSM::ZDSM(){
     
-    char port[20];  
-    printf("argc = %d, argv[1] = %s\n", argc, argv[1]);
-    if(argc == 2)
-        strcpy(port, argv[1]);
-    else 
-        strcpy(port, PORT_NAME);
+    // printf("argc = %d, argv[1] = %s\n", argc, argv[1]);
+    // if(argc == 2)
+    //     strcpy(port, argv[1]);
+    // else 
+    //     strcpy(port, PORT_NAME);
+    strcpy(port, PORT_NAME);
     printf("libmodbus modbu-rtu master demo: %s, 9600, N, 8, 1\n", port);
 
     mb = modbus_new_rtu(port, 9600, 'N', 8, 1);
@@ -60,7 +19,7 @@ int main(int argc, char *argv[])
     {
         modbus_free(mb);
         printf("new rtu failed: %s\n", modbus_strerror(errno));
-        return 0;
+        // return 0;
     }
 
     modbus_set_slave(mb, 1);
@@ -71,30 +30,18 @@ int main(int argc, char *argv[])
         modbus_close(mb);
         modbus_free(mb);
         printf("connect failed: %s\n", modbus_strerror(errno));
-        return 0;
+        // return 0;
     }
-    while(1)
-    {
-        printf("\n\nREG_ADDRESS     : "); ret = read_value(mb, REG_ADDRESS      ); unparse_2_bytes(ret);
-        printf("\n\nREG_MICROSTEP   : "); ret = read_value(mb, REG_MICROSTEP    ); unparse_2_bytes(ret);
-        printf("\n\nREG_POS_MODE    : "); ret = read_value(mb, REG_POS_MODE     ); unparse_2_bytes(ret);
-        printf("\n\nREG_ACC_STEP_H  : "); ret = read_value(mb, REG_ACC_STEP_H   ); unparse_4_bytes(ret);
-        printf("\n\nREG_ACC_PARAM_H : "); retf = read_fvalue(mb, REG_ACC_PARAM_H); unparse_float_to_bytes(retf);       
-        printf("\n\nREG_INIT_PERIOD : "); ret = read_value(mb, REG_INIT_PERIOD  ); unparse_2_bytes(ret);
-        printf("\n\nREG_MAX_PERIOD  : "); ret = read_value(mb, REG_MAX_PERIOD   ); unparse_2_bytes(ret);
-        printf("\n\nREG_MAX_DIST_H  : "); ret = read_value(mb, REG_MAX_DIST_H   ); unparse_4_bytes(ret);
-        printf("\n\nREG_ZERO_POS_H  : "); ret = read_value(mb, REG_ZERO_POS_H   ); unparse_4_bytes(ret);
-        printf("\n\nREG_LIM_SW_OFST : "); ret = read_value(mb, REG_LIM_SW_OFST  ); unparse_2_bytes(ret);
-        sleep(1);
-    }
-
-    modbus_close(mb);
-    modbus_free(mb);
-    system("pause");
-    return 0;
 }
 
-int num_bytes(int reg_addr){
+// Destructor
+ZDSM::~ZDSM(){
+    modbus_close(mb);
+    modbus_free(mb);
+}
+
+
+int ZDSM::num_bytes(int reg_addr){
     int nb;
     if ((reg_addr == REG_ADDRESS) || (reg_addr == REG_MICROSTEP) || (reg_addr == REG_POS_MODE) || (reg_addr == REG_INIT_PERIOD) || (reg_addr == REG_MAX_PERIOD)){
         nb=1;
@@ -104,7 +51,7 @@ int num_bytes(int reg_addr){
     return nb;
 }
 
-float read_fvalue(modbus_t *ctx, int reg_addr){
+float ZDSM::read_fvalue(modbus_t *ctx, int reg_addr){
     uint16_t table[2] = {0,0};
     int ret, nb;
     float value;
@@ -123,7 +70,7 @@ float read_fvalue(modbus_t *ctx, int reg_addr){
 
 }
 
-int read_value(modbus_t *ctx, int reg_addr){
+int ZDSM::read_value(modbus_t *ctx, int reg_addr){
     uint16_t table[2] = {0,0};
     int ret, value, nb;
     assert(reg_addr != REG_ACC_PARAM_H);
@@ -156,7 +103,7 @@ int read_value(modbus_t *ctx, int reg_addr){
     TODO: 
     Change to << 16 and << 8 later!
 */
-long parse_bytes(uint16_t table[], int nb){
+long ZDSM::parse_bytes(uint16_t table[], int nb){
     long intNumber;
     if(nb==1){
         intNumber = table[1]*256 + table[0];
@@ -172,7 +119,7 @@ long parse_bytes(uint16_t table[], int nb){
     Eg. Input: [0x3C][0x23][0xD7][0x0A]
         Output: 0.010000 
 */
-float parse_bytes_to_float(uint16_t table[]){
+float ZDSM::parse_bytes_to_float(uint16_t table[]){
     float f;
     uint16_t table_[] = {table[1], table[0]};
     memcpy(&f, &table_, sizeof(f));
@@ -180,7 +127,7 @@ float parse_bytes_to_float(uint16_t table[]){
 }
 
 // Inverse function parse_bytes
-uint16_t * unparse_2_bytes(long intNumber){
+uint16_t * ZDSM::unparse_2_bytes(long intNumber){
     static uint16_t table[2] = {0,0};
     static uint16_t table_[2] = {0,0};
     memcpy(&table, &intNumber, sizeof(intNumber));
@@ -192,7 +139,7 @@ uint16_t * unparse_2_bytes(long intNumber){
 }
 
 
-uint16_t * unparse_4_bytes(long intNumber){
+uint16_t * ZDSM::unparse_4_bytes(long intNumber){
     static uint16_t table[2] = {0,0};
     static uint16_t table_[2] = {0,0};
     memcpy(&table, &intNumber, sizeof(intNumber));
@@ -208,7 +155,7 @@ uint16_t * unparse_4_bytes(long intNumber){
 
 
 // Inverse function parse_bytes_to_float
-uint16_t * unparse_float_to_bytes(float f){
+uint16_t * ZDSM::unparse_float_to_bytes(float f){
     static uint16_t table[2] = {0,0};
     static uint16_t table_[2] = {0,0};
     memcpy(&table, &f, sizeof(f));

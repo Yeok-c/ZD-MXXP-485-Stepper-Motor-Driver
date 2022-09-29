@@ -15,32 +15,40 @@
 
 #define PORT_NAME "/dev/ttyUSB1"
 
-#define REG_ADDRESS      3000
-#define REG_MICROSTEP    3001
-#define REG_POS_MODE     3002
-#define REG_ACC_STEP_H   3004 // and 3005 TWO BYTES
-#define REG_ACC_PARAM_H  3006 // and 3007 TWO BYTES
-#define REG_INIT_PERIOD  3008
-#define REG_MAX_PERIOD   3009
-#define REG_MAX_DIST_H   3010 // and 3011 TWO BYTES
-#define REG_ZERO_POS_H   3012 // and 3013 TWO BYTES
-#define REG_LIM_SW_OFST  3014 // and 3015 TWO BYTES
 
-// VALUES THAT CAN BE READ
-// int REG_ADDRESS   = 3000;
-// int REG_MICROSTEP = 3001;
-// int REG_POS_MODE  = 3002;
-// int REG_ACC_STEP_H  = 3004; // and 3005 TWO BYTES
-// int REG_ACC_PARAM_H = 3006; // and 3007 TWO BYTES
-// int REG_INIT_PERIOD = 3008;
-// int REG_MAX_PERIOD  = 3009;
-// int REG_MAX_DIST_H  = 3010; // and 3011 TWO BYTES
-// int REG_ZERO_POS_H  = 3012; // and 3013 TWO BYTES
-// int REG_LIM_SW_OFST = 3014; // and 3015 TWO BYTES
+// BUTTON STATUS - COILS
+// Function code - 01 - Read coils
+#define REG_CURRENT_POS_H  5000
 
+// READ ONLY REGISTERS - TABLE 1
+// Function code 03 - Read
+// Note: Can read all 5 register at once starting at 1000
+#define REG_CURRENT_POS_H  1000
+#define REG_TARGET_POS_H   1002
+#define REG_CURRENT_STATE  1004
 
-// int zd_setup(modbus_t *ctx);
-// int zd_setup(modbus_t *ctx);
+// WRITE ONLY REGISTERS - TABLE 2
+// Function code 06 - Write
+// Moving commands
+#define REG_MOVE_TO_ZERO    2000 // value irrelevant
+#define REG_STOP_ALL        2001 // value irrelevant
+#define REG_MOVE_TO_POS_H   2002 
+#define REG_MOVE_FORWARD_H  2004
+#define REG_MOVE_BACKWARD_H 2006 
+
+// READ WRITE REGISTERS - Table 3
+// Function code 03 - Read; 06/16 - Write 
+#define REG_ADDRESS     3000
+#define REG_MICROSTEP   3001
+#define REG_POS_MODE    3002
+#define REG_ACC_STEP_H  3004 
+#define REG_ACC_PARAM_H 3006 
+#define REG_INIT_PERIOD 3008
+#define REG_MAX_PERIOD  3009
+#define REG_MAX_DIST_H  3010
+#define REG_ZERO_POS_H  3012
+#define REG_LIM_SW_OFST 3014
+
 
 int read_value(modbus_t *ctx, int reg_addr);
 float read_fvalue(modbus_t *ctx, int reg_addr);

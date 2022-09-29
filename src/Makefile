@@ -1,9 +1,11 @@
 .PHONY: all
 
-all: test_rtu_master
-test_rtu_master : test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o 
-	gcc test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o -o test_rtu_master
+all: test_rtu clean
+test_rtu : test_rtu.o test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o 
+	gcc test_rtu.o test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o -o test_rtu
 
+test_rtu.o : test_rtu.cpp
+	gcc test_rtu.cpp -c -I.
 test_rtu_master.o : test_rtu_master.c
 	gcc test_rtu_master.c -c -I.
 modbus.o : modbus.c

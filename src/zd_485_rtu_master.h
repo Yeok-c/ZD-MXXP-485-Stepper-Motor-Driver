@@ -37,10 +37,6 @@
 // int REG_LIM_SW_OFST = 3014; // and 3015 TWO BYTES
 
 int zd_setup();
-
-// int write_value(modbus_t *ctx, int reg_addr, uint16_t value);
-
-
 int read_value(modbus_t *ctx, int reg_addr);
 float read_fvalue(modbus_t *ctx, int reg_addr);
 int num_bytes(int reg_addr);

@@ -76,29 +76,6 @@ int read_value(modbus_t *ctx, int reg_addr){
     return value;
 }
 
-
-// int write_value(modbus_t *ctx, int reg_addr, uint16_t value){
-//     uint16_t table[2] = {0,0}; // if need to turn value into 2 chunks
-//     int ret, nb;
-//     assert(reg_addr != REG_ACC_PARAM_H);
-//     nb = num_bytes(reg_addr);
-//     if(nb > 1){
-//         ret = modbus_write_registers(mb, reg_addr, nb, table);
-//     } else {
-//         ret = modbus_write_register(mb, reg_addr, value);
-//     }
-//     // int modbus_write_register(modbus_t *ctx, int addr, const uint16_t value)
-
-//     if(ret != -1)
-//         printf("write success : register addr: %d, size = %d byte, value = %d \n", reg_addr, nb, value);
-//     else
-//     {
-//         printf("read error: %s\n", modbus_strerror(errno));
-//         return ret;
-//     }
-//     return value;
-// }
-
 /* 
     Parses register values into integer values
     Each register contains value 0-255 (2 hex numbers)
@@ -151,12 +128,12 @@ uint16_t * unparse_2_bytes(long intNumber){
 uint16_t * unparse_4_bytes(long intNumber){
     static uint16_t table[2] = {0,0};
     static uint16_t table_[2] = {0,0};
-    // memcpy(&table, &intNumber, sizeof(intNumber));
+    memcpy(&table, &intNumber, sizeof(intNumber));
 
-    // table_[0] = table[1] >> 8;   // shift the higher 8 bits
-    // table_[1] = table[1] & 0xff; // mask the lower 8 bits;
-    // table_[2] = table[0] >> 8;   // shift the higher 8 bits
-    // table_[3] = table[0] & 0xff; // mask the lower 8 bits;
+    table_[0] = table[1] >> 8;   // shift the higher 8 bits
+    table_[1] = table[1] & 0xff; // mask the lower 8 bits;
+    table_[2] = table[0] >> 8;   // shift the higher 8 bits
+    table_[3] = table[0] & 0xff; // mask the lower 8 bits;
     
     printf("Unparse results: [%02X][%02X] [%02X][%02X]", table_[0], table_[1],  table_[2], table_[3]); 
     return table_;

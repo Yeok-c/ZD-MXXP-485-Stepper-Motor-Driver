@@ -1,4 +1,5 @@
-# include "test_rtu_master.c"
+#include "test_rtu_master.c"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -37,6 +38,8 @@ int main(int argc, char *argv[])
     mb = modbus_new_rtu(port, 9600, 'N', 8, 1);
 
     modbus_set_debug(mb, TRUE);
+    modbus_set_response_timeout(mb, 5, 0);
+    
 
     if (mb == NULL)
     {
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    // Set address of 'mb' here
     modbus_set_slave(mb, 1);
     ret_status = modbus_connect(mb);
 
@@ -53,55 +57,119 @@ int main(int argc, char *argv[])
         modbus_close(mb);
         modbus_free(mb);
         printf("connect failed: %s\n", modbus_strerror(errno));
+        printf("You may need to start terminal as root or use sudo");
         return 0;
     }
 
-    goto_home(mb);
-    sleep(5);
     
-    while(1)
-    {
+    printf("\n Homing... waiting for HOME limit switch to be pressed \n"); 
+    homing(mb);
 
-
-        // Read button states
-        // retb = read_button_states(mb); printf("Button results: [%02X][%02X][%02X] \n", retb[0], retb[1], retb[2]); 
-
-        // Read motion-related states
-        // printf("\n\nREAD REG_CURRENT_POS_H : "); ret_uint32 = read_value(mb, REG_CURRENT_POS_H  ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
-        // printf("\n\nREAD REG_TARGET_POS_H : "); ret_uint32 = read_value(mb, REG_TARGET_POS_H  ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
-        // printf("\n\nREAD REG_CURRENT_STATE : "); ret_uint16 = read_value(mb, REG_CURRENT_STATE  ); writeUInt16ToBufferBigEndian(ret_uint16, buffer); print_state_message(ret_uint16);
-
-        // Read register states
-        // printf("\n\nREAD REG_ADDRESS     : "); ret_uint16 = read_value(mb, REG_ADDRESS      ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
-        // printf("\n\nREAD REG_MICROSTEP   : "); ret_uint16 = read_value(mb, REG_MICROSTEP    ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
-        // printf("\n\nREAD REG_POS_MODE    : "); ret_uint16 = read_value(mb, REG_POS_MODE     ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
-        // printf("\n\nREAD REG_ACC_STEP_H  : "); ret_uint32 = read_value(mb, REG_ACC_STEP_H   ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
-        // printf("\n\nREAD REG_ACC_PARAM_H : "); ret_float  = read_fvalue(mb, REG_ACC_PARAM_H ); writeFloatToBufferBigEndian( ret_float, buffer_2);   
-        // printf("\n\nREAD REG_INIT_PERIOD : "); ret_uint16 = read_value(mb, REG_INIT_PERIOD  ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
-        // printf("\n\nREAD REG_MAX_PERIOD  : "); ret_uint16 = read_value(mb, REG_MAX_PERIOD   ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
-        // printf("\n\nREAD REG_MAX_DIST_H  : "); ret_uint32 = read_value(mb, REG_MAX_DIST_H   ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
-        // printf("\n\nREAD REG_ZERO_POS_H  : "); ret_uint32 = read_value(mb, REG_ZERO_POS_H   ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
-        // printf("\n\nREAD REG_LIM_SW_OFST : "); ret_uint16 = read_value(mb, REG_LIM_SW_OFST  ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+    int homing_flag = 1;
+    while(homing_flag == 1){
+        // printf("\nREAD REG_CURRENT_POS_H : "); 
+        ret_uint32 = read_value(mb, REG_CURRENT_POS_H  ); 
+        if(ret_uint32<=1){
+            homing_flag = 0;
+        }
+        sleep(1);
+    }
     
-        // // Write to registers
-        // printf("\n\nWRITE REG_MICROSTEP   : "); ret_status = write_value(mb, REG_MICROSTEP, 16); 
-        // // printf("\n\nWRITE REG_ADDRESS     : "); ret_status = read_value(mb, REG_ADDRESS, 1);
-        // printf("\n\nWRITE REG_MICROSTEP   : "); ret_status = write_value(mb, REG_MICROSTEP,32);  
-        // // printf("\n\nWRITE REG_POS_MODE    : "); ret_status = write_value(mb, REG_POS_MODE, 1); // Not understand how this works
-        // printf("\n\nWRITE REG_ACC_STEP_H  : "); ret_status = write_value(mb, REG_ACC_STEP_H,   1000);
-        // printf("\n\nWRITE REG_ACC_PARAM_H : "); ret_status = write_fvalue(mb, REG_ACC_PARAM_H,  0.03);       
-        // printf("\n\nWRITE REG_INIT_PERIOD : "); ret_status = write_value(mb, REG_INIT_PERIOD,  800);
-        // printf("\n\nWRITE REG_MAX_PERIOD  : "); ret_status = write_value(mb, REG_MAX_PERIOD,   250);
-        // printf("\n\nWRITE REG_MAX_DIST_H  : "); ret_status = write_value(mb, REG_MAX_DIST_H,   100000);
-        // printf("\n\nWRITE REG_ZERO_POS_H  : "); ret_status = write_value(mb, REG_ZERO_POS_H,   0);
-        // printf("\n\nWRITE REG_LIM_SW_OFST : "); ret_status = write_value(mb, REG_LIM_SW_OFST,  0);
+    int program_flag = 1;
+    while(program_flag == 1){
 
-        
+        std::cout << "\nEnter a command: ";
+        unsigned char x{ }; // define variable x to hold user input (and zero-initialize it)
+        std::cin >> x;
+
+        switch(x){
+            case '8':
+                goto_position(mb, 10000);
+            break;
+
+            case '2':
+                goto_position(mb, 0);
+            break;
+
+            case '6':
+                move_backwards(mb,2000);
+            break;
+
+            case '4':
+                move_forwards(mb,2000);
+            break;
+
+            case '5':
+                stop(mb);
+            break;
+
+            case 'l':
+                lock_when_stopped(mb);
+            break;
+
+            case 'u':
+                unlock_when_stopped(mb);
+            break;
+
+
+            case 'h':
+                homing(mb);
+            break;
+
+            case 'b':
+                // Read button states
+                button_buffer = read_button_states(mb); 
+                printf("Button results: [%02X][%02X][%02X] \n", 
+                button_buffer[0], button_buffer[1], button_buffer[2]); 
+            break;
+            case 'e':
+                // Read motion-related states
+                printf("\nREAD REG_CURRENT_POS_H : "); ret_uint32 = read_value(mb, REG_CURRENT_POS_H  ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
+                printf("\nREAD REG_TARGET_POS_H : "); ret_uint32 = read_value(mb, REG_TARGET_POS_H  ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
+                printf("\nREAD REG_CURRENT_STATE : "); ret_uint16 = read_value(mb, REG_CURRENT_STATE  ); writeUInt16ToBufferBigEndian(ret_uint16, buffer); print_state_message(ret_uint16);
+            break;
+            case 'r':
+                // Read register states
+                printf("\nREAD REG_ADDRESS     : "); ret_uint16 = read_value(mb, REG_ADDRESS      ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+                printf("\nREAD REG_MICROSTEP   : "); ret_uint16 = read_value(mb, REG_MICROSTEP    ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+                printf("\nREAD REG_LOCK_MODE    : "); ret_uint16 = read_value(mb, REG_LOCK_MODE     ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+                printf("\nREAD REG_ACC_STEP_H  : "); ret_uint32 = read_value(mb, REG_ACC_STEP_H   ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
+                printf("\nREAD REG_ACC_PARAM_H : "); ret_float  = read_fvalue(mb, REG_ACC_PARAM_H ); writeFloatToBufferBigEndian( ret_float, buffer_2);   
+                printf("\nREAD REG_INIT_PERIOD : "); ret_uint16 = read_value(mb, REG_INIT_PERIOD  ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+                printf("\nREAD REG_MAX_PERIOD  : "); ret_uint16 = read_value(mb, REG_MAX_PERIOD   ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+                printf("\nREAD REG_MAX_DIST_H  : "); ret_uint32 = read_value(mb, REG_MAX_DIST_H   ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
+                printf("\nREAD REG_ZERO_POS_H  : "); ret_uint32 = read_value(mb, REG_ZERO_POS_H   ); writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
+                printf("\nREAD REG_LIM_SW_OFST : "); ret_uint16 = read_value(mb, REG_LIM_SW_OFST  ); writeUInt16ToBufferBigEndian(ret_uint16, buffer);
+            break;
+            case 'w': // Write to registers
+                // printf("\nWRITE REG_ADDRESS     : "); ret_status = read_value(mb, REG_ADDRESS, 1);
+                printf("\nWRITE REG_MICROSTEP   : "); ret_status = write_value(mb, REG_MICROSTEP,32);  
+                printf("\nWRITE REG_LOCK_MODE   : "); ret_status = write_value(mb, REG_LOCK_MODE, 0x40); // 0x40 for lock, 0x50 for unlock
+                printf("\nWRITE REG_ACC_STEP_H  : "); ret_status = write_value(mb, REG_ACC_STEP_H,   1000);
+                printf("\nWRITE REG_ACC_PARAM_H : "); ret_status = write_fvalue(mb, REG_ACC_PARAM_H,  0.01);       
+                printf("\nWRITE REG_INIT_PERIOD : "); ret_status = write_value(mb, REG_INIT_PERIOD,  800);
+                printf("\nWRITE REG_MAX_PERIOD  : "); ret_status = write_value(mb, REG_MAX_PERIOD,   250);
+                printf("\nWRITE REG_MAX_DIST_H  : "); ret_status = write_value(mb, REG_MAX_DIST_H,   10000);
+                printf("\nWRITE REG_ZERO_POS_H  : "); ret_status = write_value(mb, REG_ZERO_POS_H,   0);
+                printf("\nWRITE REG_LIM_SW_OFST : "); ret_status = write_value(mb, REG_LIM_SW_OFST,  0);                
+                printf("\nFLASHING PARAMETERS : "); ret_status = flash_parameters(mb);                
+            break;
+            case 'q':
+                printf("Quitting and releasing serial");
+                modbus_close(mb);
+                modbus_free(mb);
+                program_flag = 0;
+            break;
+            default:
+                printf("Command not found");
+            break;
+        }
+
+
+
 
     }
 
-    modbus_close(mb);
-    modbus_free(mb);
     system("pause");
     return 0;
 }

@@ -34,9 +34,9 @@
 // }
 
 
-int goto_home(modbus_t *ctx){
+int homing(modbus_t *ctx){
     int ret_status = 0;
-    printf("\n\n GOING TO HOME"); 
+    printf("\n GOING TO HOME "); 
     ret_status = write_value(ctx, REG_MOVE_TO_ZERO, 0);  
     return ret_status;
 }
@@ -44,29 +44,54 @@ int goto_home(modbus_t *ctx){
 int goto_position(modbus_t *ctx, uint32_t position){
     int ret_status = 0;
     assert(position >= 0);
-    printf("\n\nGOING TO POSITION : %d", position); 
+    printf("\nGOING TO POSITION : %d ", position); 
     ret_status = write_value(ctx, REG_MOVE_TO_POS_H, position);
     return ret_status;
 }
 
 int move_forwards(modbus_t *ctx, uint32_t steps){
     int ret_status = 0;
-    printf("\n\nMOVING FORWARDS : %d", steps); 
+    printf("\nMOVING FORWARDS : %d ", steps); 
     ret_status = write_value(ctx, REG_MOVE_FORWARD_H, steps);  
     return ret_status;
 }
 
 int move_backwards(modbus_t *ctx, uint32_t steps){
     int ret_status = 0;
-    printf("\n\nMOVING BACKWARDS : %d", steps); 
+    printf("\nMOVING BACKWARDS : %d ", steps); 
     ret_status = write_value(ctx, REG_MOVE_BACKWARD_H, steps);  
     return ret_status;
 }
 
 int stop(modbus_t *ctx){
     int ret_status = 0;
-    printf("\n\n STOPPING MOTOR"); 
+    printf("\n STOPPING MOTOR "); 
     ret_status = write_value(ctx, REG_STOP_ALL, 0);  
+    return ret_status;
+}
+
+int lock_when_stopped(modbus_t *ctx){
+    int ret_status = 0;                
+    printf("\nCONFIG TO LOCK WHEN STOPPED    : "); 
+    ret_status = write_value(ctx, REG_LOCK_MODE, 0x40); 
+    // 0x40 for lock, 0x50 for unlock
+    move_forwards(ctx, 1);
+    return ret_status;
+}
+
+int unlock_when_stopped(modbus_t *ctx){
+    int ret_status = 0;                
+    printf("\nCONFIG TO UNLOCK WHEN STOPPED   : "); 
+    ret_status = write_value(ctx, REG_LOCK_MODE, 0x50); 
+    // 0x40 for lock, 0x50 for unlock
+    move_forwards(ctx, 1);
+    return ret_status;
+}
+
+int flash_parameters(modbus_t *ctx){
+    int ret_status = 0;                
+    printf("\nWRITE REG_LOCK_MODE    : "); 
+    ret_status = write_value(ctx, REG_FLASH_CONFIGURATION, 0); 
     return ret_status;
 }
 
@@ -191,7 +216,7 @@ int write_fvalue(modbus_t *ctx, int reg_addr, float fvalue){
 
 int num_bytes(int reg_addr){
     int nb;
-    if ((reg_addr == REG_ADDRESS) || (reg_addr == REG_MICROSTEP) || (reg_addr == REG_POS_MODE) || 
+    if ((reg_addr == REG_ADDRESS) || (reg_addr == REG_MICROSTEP) || (reg_addr == REG_LOCK_MODE) || 
         (reg_addr == REG_INIT_PERIOD) || (reg_addr == REG_MAX_PERIOD) || (reg_addr == REG_LIM_SW_OFST)||
         (reg_addr == REG_CURRENT_STATE) || (reg_addr==REG_MOVE_TO_ZERO) || (reg_addr==REG_STOP_ALL)){
         nb=1;
@@ -265,16 +290,19 @@ void writeUInt32ToBufferBigEndian(uint32_t number, uint16_t* buffer)
 {
     buffer[0] = (uint16_t) ((number >> 16) & 0xff);
     buffer[1] = (uint16_t) (number);
-    printf("Buffer reconstructed: {%04X}{%04X} \n", buffer[0], buffer[1]); 
+    // printf(" Buffer reconstructed: {%04X}{%04X} \n", buffer[0], buffer[1]); 
 }
 
 void writeFloatToBufferBigEndian(float f, uint16_t* buffer)
-{
-    static uint32_t number;
-    memcpy(&number, &f, sizeof(f));
-    buffer[0] = (uint16_t) ((number >> 16) & 0xff);
-    buffer[1] = (uint16_t) (number);
-    printf("Buffer reconstructed: {%04X}{%04X} \n", buffer[0], buffer[1]); 
+{	
+    buffer[0] = (uint16_t) ((*(unsigned int*)(&f)) >> 16);
+    buffer[1] = (uint16_t) ((*(unsigned int*)(&f)) >> 0);
+
+    // static uint32_t number;
+    // memcpy(&number, &f, sizeof(f));
+    // buffer[0] = (uint16_t) ((number >> 16) & 0xff);
+    // buffer[1] = (uint16_t) (number);
+    // printf(" Buffer reconstructed: {%04X}{%04X} \n", buffer[0], buffer[1]); 
 }
 
 void writeUInt16ToBufferBigEndian(uint16_t number, uint16_t* buffer)

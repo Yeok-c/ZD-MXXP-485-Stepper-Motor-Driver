@@ -13,8 +13,15 @@
 #include <unistd.h>
 #endif
 
-#define PORT_NAME "/dev/ttyUSB1"
+// Default port name
+// You can specify when launching program
+// eg. ./test_rtu /dev/ttyUSB1
+#define PORT_NAME "/dev/ttyUSB0"
 
+
+// NEMA full revolution number of steps
+// #define FULL_REVOLUTION_STEPS 171072 
+//198*27*32 //360/~1.8 (angle/nema_step) * 27 gear reduction * 32 microsteps 
 
 // BUTTON STATUS - COILS
 // Function code - 01 - Read coils
@@ -41,7 +48,7 @@
 // Function code 03 - Read; 06/16 - Write 
 #define REG_ADDRESS     3000
 #define REG_MICROSTEP   3001
-#define REG_POS_MODE    3002
+#define REG_LOCK_MODE    3002
 #define REG_ACC_STEP_H  3004 
 #define REG_ACC_PARAM_H 3006 
 #define REG_INIT_PERIOD 3008
@@ -49,6 +56,9 @@
 #define REG_MAX_DIST_H  3010
 #define REG_ZERO_POS_H  3012
 #define REG_LIM_SW_OFST 3014
+
+// Idk why this isn't provided in the datasheet
+#define REG_FLASH_CONFIGURATION 4002 
 
 // POSSIBLE STATES FOR CURRENT STATE REGISTER - 1004 
 #define STATE_UNDEFINED             0xFF // 开机未定义状态。当不是 0xff 时，各 bit 位表示不同意思
@@ -86,8 +96,12 @@ uint16_t * unparse_4_bytes(uint32_t intNumber);
 uint8_t * read_button_states(modbus_t *ctx);
 uint32_t * read_motion_states(modbus_t *ctx);
 
-int goto_home(modbus_t *ctx);
+int homing(modbus_t *ctx);
 int goto_position(modbus_t *ctx, uint32_t position);
 int move_forwards(modbus_t *ctx, uint32_t steps);
 int move_backwards(modbus_t *ctx, uint32_t steps);
 int stop(modbus_t *ctx);
+
+int lock_when_stopped(modbus_t *ctx);
+int unlock_when_stopped(modbus_t *ctx);
+int flash_parameters(modbus_t *ctx);

@@ -2,7 +2,7 @@
 
 all: test_rtu clean
 test_rtu : test_rtu.o test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o 
-	g++ test_rtu.o test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o -o test_rtu
+	g++ test_rtu.o test_rtu_master.o modbus.o modbus-rtu.o modbus-data.o -o ../test_rtu
 
 test_rtu.o : test_rtu.cpp
 	g++ test_rtu.cpp -c -I.

@@ -7,31 +7,31 @@ Main contribution is c libraries ```zdmxxp.c``` and ```zdmxxp.h```.
 
 ## Features
 - Control stepper motor motion
--- homing
--- goto_position
--- move_forwards
--- move_backwards
--- stop
+  - homing
+  - goto_position
+  - move_forwards
+  - move_backwards
+  - stop
 
 - Read limit switch states
--- read_button_states reads home, limit_down and limit_up switch states and returns their states (1 or 0) 
+  - read_button_states reads home, limit_down and limit_up switch states and returns their states (1 or 0) 
 
 - Read motor state
--- REG_CURRENT_POS_H - Current position
--- REG_TARGET_POS_H - Target position currently moving towards
--- REG_CURRENT_STATE - Reads current state, which may be STATE_UNDEFINED, STATE_IDLE, STATE_ACCEL, STATE_CONST, STATE_DECCEL, STATE_HOMING, STATE_ERROR_RETURNING, STATE_UP_BUTTON_PRESSED, STATE_DOWN_BUTTON_PRESSED
+  - REG_CURRENT_POS_H - Current position
+  - REG_TARGET_POS_H - Target position currently moving towards
+  - REG_CURRENT_STATE - Reads current state, which may be STATE_UNDEFINED, STATE_IDLE, STATE_ACCEL, STATE_CONST, STATE_DECCEL, STATE_HOMING, STATE_ERROR_RETURNING, STATE_UP_BUTTON_PRESSED, STATE_DOWN_BUTTON_PRESSED
 
 - Read and write register values (the meanings of these registers are my own intepretation based on their Chinese terms)
--- REG_ADDRESS  - Device address  
--- REG_MICROSTEP - 1 / 2 / 4 / 8 / 16 / 32 (and more depending on driver)
--- REG_LOCK_MODE - Whether device locks itself from moving when not in motion
--- REG_ACC_STEP_H  - Stepper acceleration steps
--- REG_ACC_PARAM_H - Stepper acceleration parameter
--- REG_INIT_PERIOD - Period of stepper clocks when accelerating
--- REG_MAX_PERIOD  - Period of stepper clocks when at constant (aka max) speed
--- REG_MAX_DIST_H - Maximum steps that can be travelled by stepper
--- REG_ZERO_POS_H - Home position wrt to zero
--- REG_LIM_SW_OFST - Offset between home limit switch and designated home position
+  - REG_ADDRESS  - Device address  
+  - REG_MICROSTEP - 1 / 2 / 4 / 8 / 16 / 32 (and more depending on driver)
+  - REG_LOCK_MODE - Whether device locks itself from moving when not in motion
+  - REG_ACC_STEP_H  - Stepper acceleration steps
+  - REG_ACC_PARAM_H - Stepper acceleration parameter
+  - REG_INIT_PERIOD - Period of stepper clocks when accelerating
+  - REG_MAX_PERIOD  - Period of stepper clocks when at constant (aka max) speed
+  - REG_MAX_DIST_H - Maximum steps that can be travelled by stepper
+  - REG_ZERO_POS_H - Home position wrt to zero
+  - REG_LIM_SW_OFST - Offset between home limit switch and designated home position
 
 - Theoretically this implementation should be cross-platform between linux and windows. libmodbus is cross platform - the only linux-only dependency used by me is ```sleep``` - of which should be easily substituted for windows.
 

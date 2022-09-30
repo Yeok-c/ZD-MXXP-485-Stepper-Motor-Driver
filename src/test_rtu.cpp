@@ -1,4 +1,4 @@
-#include "test_rtu_master.c"
+#include "zdxxmp.c"
 #include <iostream>
 
 int main(int argc, char *argv[])

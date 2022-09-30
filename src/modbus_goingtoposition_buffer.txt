@@ -1,0 +1,26 @@
+GOING TO POSITION : 1000
+Buffer reconstructed: {0000}{03E8} 
+
+
+[01][10][07][D2][00][02][04][00][00][03][E8][59][A4]
+
+[01] Address
+[10] Function code 16
+[07][D2] Address of first register
+[00][02] Number of registers
+[04]     Number of bytes more
+
+[00][00] Package HIGH
+[03][E8] Package LOW
+
+[59][A4] CRC
+
+
+Waiting for a confirmation...
+<01> Address
+<10> Function code
+<07><D2> Address of first register
+<00><02> Number of registers recorded
+<E0><85> CRC
+
+write success : register addr: 2002, size = 2 byte, value = 1000 

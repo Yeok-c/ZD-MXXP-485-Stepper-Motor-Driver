@@ -33,14 +33,86 @@
 //     return 0;
 // }
 
-int num_bytes(int reg_addr){
-    int nb;
-    if ((reg_addr == REG_ADDRESS) || (reg_addr == REG_MICROSTEP) || (reg_addr == REG_POS_MODE) || (reg_addr == REG_INIT_PERIOD) || (reg_addr == REG_MAX_PERIOD)){
-        nb=1;
-    } else {
-        nb=2;
+
+int goto_home(modbus_t *ctx){
+    int ret_status = 0;
+    printf("\n\n GOING TO HOME"); 
+    ret_status = write_value(ctx, REG_MOVE_TO_ZERO, 0);  
+    return ret_status;
+}
+
+int goto_position(modbus_t *ctx, uint32_t position){
+    int ret_status = 0;
+    assert(position >= 0);
+    printf("\n\nGOING TO POSITION : %d", position); 
+    ret_status = write_value(ctx, REG_MOVE_TO_POS_H, position);
+    return ret_status;
+}
+
+int move_forwards(modbus_t *ctx, uint32_t steps){
+    int ret_status = 0;
+    printf("\n\nMOVING FORWARDS : %d", steps); 
+    ret_status = write_value(ctx, REG_MOVE_FORWARD_H, steps);  
+    return ret_status;
+}
+
+int move_backwards(modbus_t *ctx, uint32_t steps){
+    int ret_status = 0;
+    printf("\n\nMOVING BACKWARDS : %d", steps); 
+    ret_status = write_value(ctx, REG_MOVE_BACKWARD_H, steps);  
+    return ret_status;
+}
+
+int stop(modbus_t *ctx){
+    int ret_status = 0;
+    printf("\n\n STOPPING MOTOR"); 
+    ret_status = write_value(ctx, REG_STOP_ALL, 0);  
+    return ret_status;
+}
+
+uint8_t * read_button_states(modbus_t *ctx){
+    static uint8_t table[3] = {0,0,0};
+    modbus_read_bits(ctx, REG_BUTTON_STATES_H, 3, table);
+    return table;
+}
+
+
+void print_state_message(uint16_t state){
+    if(state==STATE_UNDEFINED)  printf("State code: %04d: STATE_UNDEFINED\n", STATE_UNDEFINED);        
+    if(state==STATE_IDLE)       printf("State code: %04d: STATE_IDLE\n", STATE_IDLE);       
+    if(state==STATE_ACCEL)      printf("State code: %04d: STATE_ACCEL\n", STATE_ACCEL);             
+    if(state==STATE_CONST)      printf("State code: %04d: STATE_CONST\n", STATE_CONST);            
+    if(state==STATE_DECCEL)     printf("State code: %04d: STATE_DECCEL\n", STATE_DECCEL);
+    if(state==STATE_HOMING)     printf("State code: %04d: STATE_HOMING\n", STATE_HOMING);
+    if(state==STATE_ERROR_RETURNING)printf("State code: %04d: STATE_ERROR_RETURNING\n", STATE_ERROR_RETURNING);
+    if(state==STATE_UP_BUTTON_PRESSED)printf("State code: %04d: STATE_UP_BUTTON_PRESSED\n", STATE_UP_BUTTON_PRESSED);
+    if(state==STATE_DOWN_BUTTON_PRESSED)printf("State code: %04d: STATE_DOWN_BUTTON_PRESSED\n", STATE_DOWN_BUTTON_PRESSED);
+    // else{
+    //     printf("State code: %04d: UNKNOWN \n", state);
+    // }
+}
+
+uint32_t read_value(modbus_t *ctx, int reg_addr){
+    uint16_t table[2] = {0,0};
+    uint32_t value;
+    int ret, nb;
+    assert(reg_addr != REG_ACC_PARAM_H);
+    nb = num_bytes(reg_addr);
+    ret = modbus_read_registers(ctx, reg_addr, nb, table);
+    if(nb == 1){
+        // printf("\n table values: {%04X}, ", table[0]);
+    } else if (nb ==2){
+        // printf("\n table values: {%04X}{%04X}, ", table[0], table[1]);        
     }
-    return nb;
+    value = parse_bytes(table, nb);     
+    if(ret != -1)
+        printf("read success : register addr: %d, size = %d byte, value = %d \n", reg_addr, nb, value);
+    else
+    {
+        printf("read error: %s\n", modbus_strerror(errno));
+        return ret;
+    }
+    return value;
 }
 
 float read_fvalue(modbus_t *ctx, int reg_addr){
@@ -62,24 +134,74 @@ float read_fvalue(modbus_t *ctx, int reg_addr){
 
 }
 
-int read_value(modbus_t *ctx, int reg_addr){
-    uint16_t table[2] = {0,0};
-    int ret, value, nb;
+int write_value(modbus_t *ctx, int reg_addr, uint32_t value){
+    uint16_t myBuffer_2;
+    uint16_t *buffer_2 = &myBuffer_2;
+    defAllocator_uint16(buffer_2, 2);
+
+    uint16_t myBuffer;
+    uint16_t *buffer = &myBuffer;
+    defAllocator_uint16(buffer, 1);
+
+    int ret = 0;
+    int nb;
     assert(reg_addr != REG_ACC_PARAM_H);
     nb = num_bytes(reg_addr);
-    ret = modbus_read_registers(ctx, reg_addr, nb, table);
-    if (reg_addr != REG_ACC_PARAM_H){
-        value = parse_bytes(table, nb);     
+    if(nb == 2){
+        // uses function code 16
+        writeUInt32ToBufferBigEndian(value, buffer_2);
+        ret = modbus_write_registers(ctx, reg_addr, nb, buffer_2);
+         
+    } else if (nb==1){   
+        writeUInt16ToBufferBigEndian(value, buffer);
+        ret = modbus_write_register(ctx, reg_addr, *buffer);
     }
 
     if(ret != -1)
-        printf("read success : register addr: %d, size = %d byte, value = %d \n", reg_addr, nb, value);
+        printf("write success : register addr: %d, size = %d byte, value = %d \n", reg_addr, nb, value);
     else
     {
-        printf("read error: %s\n", modbus_strerror(errno));
-        return ret;
+        printf("write error: %s\n", modbus_strerror(errno));
     }
-    return value;
+    return ret;
+}
+
+int write_fvalue(modbus_t *ctx, int reg_addr, float fvalue){
+    uint16_t myBuffer_2;
+    uint16_t *buffer_2 = &myBuffer_2;    
+    defAllocator_uint16(buffer_2, 2);
+    int ret = 0;
+
+
+    assert(reg_addr == REG_ACC_PARAM_H);
+    writeFloatToBufferBigEndian(fvalue, buffer_2);
+    ret = modbus_write_registers(ctx, reg_addr, 2, buffer_2);
+    if(ret != -1)
+        printf("write success : register addr: %d, size = %d byte, value = %f \n", reg_addr, 2, fvalue);
+    else
+    {
+        printf("write error: %s\n", modbus_strerror(errno));
+    }
+    return ret;
+}
+
+
+
+// Private functions ---------------------------------------
+
+int num_bytes(int reg_addr){
+    int nb;
+    if ((reg_addr == REG_ADDRESS) || (reg_addr == REG_MICROSTEP) || (reg_addr == REG_POS_MODE) || 
+        (reg_addr == REG_INIT_PERIOD) || (reg_addr == REG_MAX_PERIOD) || (reg_addr == REG_LIM_SW_OFST)||
+        (reg_addr == REG_CURRENT_STATE) || (reg_addr==REG_MOVE_TO_ZERO) || (reg_addr==REG_STOP_ALL)){
+        nb=1;
+
+    } else if (reg_addr==REG_BUTTON_STATES_H) {
+        nb=3;
+    } else {
+        nb=2;
+    }
+    return nb;
 }
 
 /* 
@@ -95,10 +217,11 @@ int read_value(modbus_t *ctx, int reg_addr){
     TODO: 
     Change to << 16 and << 8 later!
 */
-long parse_bytes(uint16_t table[], int nb){
-    long intNumber;
+
+uint32_t parse_bytes(uint16_t table[], int nb){
+    uint32_t intNumber;
     if(nb==1){
-        intNumber = table[1]*256 + table[0];
+        intNumber = table[0];
     } 
     else if(nb==2){
         intNumber = table[0]*256*256 + table[1];
@@ -118,60 +241,63 @@ float parse_bytes_to_float(uint16_t table[]){
     return f;
 }
 
-// Inverse function parse_bytes
-uint16_t * unparse_2_bytes(long intNumber){
-    static uint16_t table[2] = {0,0};
-    static uint16_t table_[2] = {0,0};
-    memcpy(&table, &intNumber, sizeof(intNumber));
+// uint32_t get_UInt32FromBufferBigEndian(uint8_t* buffer){
+//     static uint32_t number = 0;
+//     memcpy(&number, &buffer, sizeof(uint32_t));
+//     return number;
+// }
 
-    table_[0] = table[0] >> 8;   // shift the higher 8 bits
-    table_[1] = table[0] & 0xff; // mask the lower 8 bits;
-    printf("Unparse results: [%02X][%02X]", table_[0], table_[1]); 
-    return table_;
+// uint16_t get_UInt16FromBufferBigEndian(uint8_t* buffer){
+//     static uint16_t number = 0;
+//     memcpy(&number, &buffer, sizeof(uint16_t));
+//     return number;
+// }
+
+// float get_FloatFromBufferBigEndian(uint8_t* buffer){
+//     static float f = 0;
+//     memcpy(&f, &buffer, sizeof(float));
+//     return f;
+// }
+
+// Convert values to register buffers values =============================================
+
+void writeUInt32ToBufferBigEndian(uint32_t number, uint16_t* buffer)
+{
+    buffer[0] = (uint16_t) ((number >> 16) & 0xff);
+    buffer[1] = (uint16_t) (number);
+    printf("Buffer reconstructed: {%04X}{%04X} \n", buffer[0], buffer[1]); 
 }
 
-
-uint16_t * unparse_4_bytes(long intNumber){
-    static uint16_t table[2] = {0,0};
-    static uint16_t table_[2] = {0,0};
-    memcpy(&table, &intNumber, sizeof(intNumber));
-
-    table_[0] = table[1] >> 8;   // shift the higher 8 bits
-    table_[1] = table[1] & 0xff; // mask the lower 8 bits;
-    table_[2] = table[0] >> 8;   // shift the higher 8 bits
-    table_[3] = table[0] & 0xff; // mask the lower 8 bits;
-    
-    printf("Unparse results: [%02X][%02X] [%02X][%02X]", table_[0], table_[1],  table_[2], table_[3]); 
-    return table_;
+void writeFloatToBufferBigEndian(float f, uint16_t* buffer)
+{
+    static uint32_t number;
+    memcpy(&number, &f, sizeof(f));
+    buffer[0] = (uint16_t) ((number >> 16) & 0xff);
+    buffer[1] = (uint16_t) (number);
+    printf("Buffer reconstructed: {%04X}{%04X} \n", buffer[0], buffer[1]); 
 }
 
-
-// Inverse function parse_bytes_to_float
-uint16_t * unparse_float_to_bytes(float f){
-    static uint16_t table[2] = {0,0};
-    static uint16_t table_[2] = {0,0};
-    memcpy(&table, &f, sizeof(f));
-    table_[0] = table[1] >> 8;   // shift the higher 8 bits
-    table_[1] = table[1] & 0xff; // mask the lower 8 bits;
-    table_[2] = table[0] >> 8;   // shift the higher 8 bits
-    table_[3] = table[0] & 0xff; // mask the lower 8 bits;
-
-    printf("Unparse results: [%02X][%02X] [%02X][%02X]", table_[0], table_[1],  table_[2], table_[3]); 
-    return table_;
+void writeUInt16ToBufferBigEndian(uint16_t number, uint16_t* buffer)
+{
+    buffer[0] = (uint16_t) (number);
+    // printf("Buffer reconstructed: {%04X} \n", buffer[0]); 
 }
 
-/*
+// Pointer allocation
+void defAllocator_uint8(uint8_t *buffer, uint8_t count) {
+    buffer = (uint8_t*)malloc(count);
+    // printf("Allocated %d uint8_t at the heap at %p\n", count, buffer);
+}
 
-        // for(int i = 0; i < 3; i++)
-        //     table[i] += 1;
+// Pointer allocation
+void defAllocator_uint16(uint16_t *buffer, uint16_t count) {
+    buffer = (uint16_t*)malloc(count);
+    // printf("Allocated %d uint16_t at the heap at %p\n", count, buffer);
+}
 
-        // ret = modbus_write_registers(mb, 0x0F, 3, table);
-        // if(ret == 3)
-        //     printf("write success: 0x%02x 0x%02x 0x%02x \n", table[0], table[1], table[2]);
-        // else
-        // {
-        //     printf("write error: %s\n", modbus_strerror(errno));
-        //     break;
-        // }
-        // Sleep(1000);
-*/
+// Pointer allocation
+void defAllocator_uint32(uint32_t *buffer, uint32_t count) {
+    buffer = (uint32_t*)malloc(count);
+    // printf("Allocated %d uint32_t at the heap at %p\n", count, buffer);
+}
+

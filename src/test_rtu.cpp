@@ -58,6 +58,8 @@ int main(int argc, char *argv[])
         strcpy(port, PORT_NAME);
     printf("libmodbus modbu-rtu master demo: %s, 9600, N, 8, 1\n", port);
 
+
+    // modbus_new_rtu(const char *device, int baud, char parity, int data_bit, int stop_bit);
     mb = modbus_new_rtu(port, 9600, 'N', 8, 1);
 
     modbus_set_debug(mb, TRUE);
@@ -96,10 +98,12 @@ int main(int argc, char *argv[])
         {
         
         case '1':
+            printf("Changing destination of commands sent to 1");
             device_addr=1;
             break;
 
         case '2':
+            printf("Changing destination of commands sent to 2");
             device_addr=2;
             break;
 
@@ -132,7 +136,7 @@ int main(int argc, char *argv[])
             break;
 
         case 'a':
-            change_address(mb, 0, 2);
+            change_address(mb, 2, 1);
             break;
 
         case 'h':

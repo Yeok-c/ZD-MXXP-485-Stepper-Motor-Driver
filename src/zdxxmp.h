@@ -20,8 +20,8 @@
 
 
 // NEMA full revolution number of steps
-// #define FULL_REVOLUTION_STEPS 171072 
-//198*27*32 //360/~1.8 (angle/nema_step) * 27 gear reduction * 32 microsteps 
+#define FULL_REVOLUTION_STEPS 145728 
+// 198*23*32 //360/~1.8 (angle/nema_step) * 23 gear reduction * 32 microsteps 
 
 // BUTTON STATUS - COILS
 // Function code - 01 - Read coils
@@ -72,11 +72,11 @@
 #define STATE_DOWN_BUTTON_PRESSED   0x70 // 运行过程撞到 down 开关
 
 
-uint32_t read_value(modbus_t *ctx, int reg_addr);
-float read_fvalue(modbus_t *ctx, int reg_addr);
+uint32_t read_value(modbus_t *ctx, int device_addr, int reg_addr);
+float read_fvalue(modbus_t *ctx, int device_addr, int reg_addr);
 
-int write_value(modbus_t *ctx, int reg_addr, uint32_t value);
-int write_fvalue(modbus_t *ctx, int reg_addr, float fvalue);
+int write_value(modbus_t *ctx, int device_addr, int reg_addr, uint32_t value);
+int write_fvalue(modbus_t *ctx, int device_addr, int reg_addr, float fvalue);
 
 void defAllocator_uint8(uint8_t *buffer, uint8_t count);
 void defAllocator_uint16(uint16_t *buffer, uint16_t count);
@@ -93,15 +93,16 @@ uint8_t * unparse_2_bytes(uint16_t intNumber);
 uint16_t * unparse_float_to_bytes(float f);
 uint16_t * unparse_4_bytes(uint32_t intNumber);
 
-uint8_t * read_button_states(modbus_t *ctx);
-uint32_t * read_motion_states(modbus_t *ctx);
+uint8_t * read_button_states(modbus_t *ctx, int device_addr);
+uint32_t * read_motion_states(modbus_t *ctx, int device_addr);
 
-int homing(modbus_t *ctx);
-int goto_position(modbus_t *ctx, uint32_t position);
-int move_forwards(modbus_t *ctx, uint32_t steps);
-int move_backwards(modbus_t *ctx, uint32_t steps);
-int stop(modbus_t *ctx);
+int homing(modbus_t *ctx, int device_addr);
+int goto_position(modbus_t *ctx, int device_addr, uint32_t position);
+int move_forwards(modbus_t *ctx, int device_addr, uint32_t steps);
+int move_backwards(modbus_t *ctx, int device_addr, uint32_t steps);
+int stop(modbus_t *ctx, int device_addr);
 
-int lock_when_stopped(modbus_t *ctx);
-int unlock_when_stopped(modbus_t *ctx);
-int flash_parameters(modbus_t *ctx);
+int lock_when_stopped(modbus_t *ctx, int device_addr);
+int unlock_when_stopped(modbus_t *ctx, int device_addr);
+int flash_parameters(modbus_t *ctx, int device_addr);
+int change_address(modbus_t *ctx, int old_device_addr, int new_device_addr);

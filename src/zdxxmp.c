@@ -34,69 +34,70 @@
 // }
 
 
-int homing(modbus_t *ctx){
+int homing(modbus_t *ctx, int device_addr){
     int ret_status = 0;
     printf("\n GOING TO HOME "); 
-    ret_status = write_value(ctx, REG_MOVE_TO_ZERO, 0);  
+    ret_status = write_value(ctx, device_addr, REG_MOVE_TO_ZERO, 0);  
     return ret_status;
 }
 
-int goto_position(modbus_t *ctx, uint32_t position){
+int goto_position(modbus_t *ctx, int device_addr, uint32_t position){
     int ret_status = 0;
     assert(position >= 0);
     printf("\nGOING TO POSITION : %d ", position); 
-    ret_status = write_value(ctx, REG_MOVE_TO_POS_H, position);
+    ret_status = write_value(ctx, device_addr, REG_MOVE_TO_POS_H, position);
     return ret_status;
 }
 
-int move_forwards(modbus_t *ctx, uint32_t steps){
+int move_forwards(modbus_t *ctx, int device_addr, uint32_t steps){
     int ret_status = 0;
     printf("\nMOVING FORWARDS : %d ", steps); 
-    ret_status = write_value(ctx, REG_MOVE_FORWARD_H, steps);  
+    ret_status = write_value(ctx, device_addr, REG_MOVE_FORWARD_H, steps);  
     return ret_status;
 }
 
-int move_backwards(modbus_t *ctx, uint32_t steps){
+int move_backwards(modbus_t *ctx, int device_addr, uint32_t steps){
     int ret_status = 0;
     printf("\nMOVING BACKWARDS : %d ", steps); 
-    ret_status = write_value(ctx, REG_MOVE_BACKWARD_H, steps);  
+    ret_status = write_value(ctx, device_addr, REG_MOVE_BACKWARD_H, steps);  
     return ret_status;
 }
 
-int stop(modbus_t *ctx){
+int stop(modbus_t *ctx, int device_addr){
     int ret_status = 0;
     printf("\n STOPPING MOTOR "); 
-    ret_status = write_value(ctx, REG_STOP_ALL, 0);  
+    ret_status = write_value(ctx, device_addr, REG_STOP_ALL, 0);  
     return ret_status;
 }
 
-int lock_when_stopped(modbus_t *ctx){
+int lock_when_stopped(modbus_t *ctx, int device_addr){
     int ret_status = 0;                
     printf("\nCONFIG TO LOCK WHEN STOPPED    : "); 
-    ret_status = write_value(ctx, REG_LOCK_MODE, 0x40); 
+    ret_status = write_value(ctx, device_addr, REG_LOCK_MODE, 0x40); 
     // 0x40 for lock, 0x50 for unlock
-    move_forwards(ctx, 1);
+    move_forwards(ctx, device_addr, 1);
     return ret_status;
 }
 
-int unlock_when_stopped(modbus_t *ctx){
+int unlock_when_stopped(modbus_t *ctx, int device_addr){
     int ret_status = 0;                
     printf("\nCONFIG TO UNLOCK WHEN STOPPED   : "); 
-    ret_status = write_value(ctx, REG_LOCK_MODE, 0x50); 
+    ret_status = write_value(ctx, device_addr, REG_LOCK_MODE, 0x50); 
     // 0x40 for lock, 0x50 for unlock
-    move_forwards(ctx, 1);
+    move_forwards(ctx, device_addr, 1);
     return ret_status;
 }
 
-int flash_parameters(modbus_t *ctx){
+int flash_parameters(modbus_t *ctx, int device_addr){
     int ret_status = 0;                
-    printf("\nWRITE REG_LOCK_MODE    : "); 
-    ret_status = write_value(ctx, REG_FLASH_CONFIGURATION, 0); 
+    printf("\nFLASHING CONFIGURATION    : "); 
+    ret_status = write_value(ctx, device_addr, REG_FLASH_CONFIGURATION, 0); 
     return ret_status;
 }
 
-uint8_t * read_button_states(modbus_t *ctx){
+uint8_t * read_button_states(modbus_t *ctx, int device_addr){
     static uint8_t table[3] = {0,0,0};
+    modbus_set_slave(ctx, device_addr);
     modbus_read_bits(ctx, REG_BUTTON_STATES_H, 3, table);
     return table;
 }
@@ -117,12 +118,23 @@ void print_state_message(uint16_t state){
     // }
 }
 
-uint32_t read_value(modbus_t *ctx, int reg_addr){
+int change_address(modbus_t *ctx, int old_device_addr, int new_device_addr){
+    int ret;
+    printf("\nChanging device address from : %d to %d \n", old_device_addr, new_device_addr); 
+    ret = write_value(ctx, old_device_addr, REG_ADDRESS, new_device_addr);
+    flash_parameters(ctx, 0);
+    flash_parameters(ctx, 1);
+    flash_parameters(ctx, 2);
+    return ret;
+}
+
+uint32_t read_value(modbus_t *ctx, int device_addr, int reg_addr){
     uint16_t table[2] = {0,0};
     uint32_t value;
     int ret, nb;
     assert(reg_addr != REG_ACC_PARAM_H);
     nb = num_bytes(reg_addr);
+    modbus_set_slave(ctx, device_addr);
     ret = modbus_read_registers(ctx, reg_addr, nb, table);
     if(nb == 1){
         // printf("\n table values: {%04X}, ", table[0]);
@@ -140,12 +152,13 @@ uint32_t read_value(modbus_t *ctx, int reg_addr){
     return value;
 }
 
-float read_fvalue(modbus_t *ctx, int reg_addr){
+float read_fvalue(modbus_t *ctx, int device_addr, int reg_addr){
     uint16_t table[2] = {0,0};
     int ret, nb;
     float value;
     assert(reg_addr == REG_ACC_PARAM_H);
     nb = num_bytes(reg_addr);
+    modbus_set_slave(ctx, device_addr);
     ret = modbus_read_registers(ctx, reg_addr, nb, table);
     value = parse_bytes_to_float(table);
     if(ret != -1)
@@ -159,7 +172,7 @@ float read_fvalue(modbus_t *ctx, int reg_addr){
 
 }
 
-int write_value(modbus_t *ctx, int reg_addr, uint32_t value){
+int write_value(modbus_t *ctx, int device_addr, int reg_addr, uint32_t value){
     uint16_t myBuffer_2;
     uint16_t *buffer_2 = &myBuffer_2;
     defAllocator_uint16(buffer_2, 2);
@@ -171,6 +184,8 @@ int write_value(modbus_t *ctx, int reg_addr, uint32_t value){
     int ret = 0;
     int nb;
     assert(reg_addr != REG_ACC_PARAM_H);
+    modbus_set_slave(ctx, device_addr);
+
     nb = num_bytes(reg_addr);
     if(nb == 2){
         // uses function code 16
@@ -191,7 +206,7 @@ int write_value(modbus_t *ctx, int reg_addr, uint32_t value){
     return ret;
 }
 
-int write_fvalue(modbus_t *ctx, int reg_addr, float fvalue){
+int write_fvalue(modbus_t *ctx, int device_addr, int reg_addr, float fvalue){
     uint16_t myBuffer_2;
     uint16_t *buffer_2 = &myBuffer_2;    
     defAllocator_uint16(buffer_2, 2);
@@ -200,6 +215,8 @@ int write_fvalue(modbus_t *ctx, int reg_addr, float fvalue){
 
     assert(reg_addr == REG_ACC_PARAM_H);
     writeFloatToBufferBigEndian(fvalue, buffer_2);
+
+    modbus_set_slave(ctx, device_addr);
     ret = modbus_write_registers(ctx, reg_addr, 2, buffer_2);
     if(ret != -1)
         printf("write success : register addr: %d, size = %d byte, value = %f \n", reg_addr, 2, fvalue);

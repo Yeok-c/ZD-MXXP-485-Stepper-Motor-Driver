@@ -11,7 +11,7 @@ int m_open(modbus_t *ctx, int device_addr){
 int m_close(modbus_t *ctx, int device_addr){
     modbus_set_slave(ctx, device_addr);
     move_backwards(ctx, device_addr, open_size);
-    sleep(10);
+    sleep(8);
     unlock_when_stopped(ctx, device_addr);
     sleep(0.5);
     lock_when_stopped(ctx, device_addr);
@@ -20,7 +20,7 @@ int m_close(modbus_t *ctx, int device_addr){
 
 int m_home(modbus_t *ctx, int device_addr){
     move_backwards(ctx, device_addr, open_size);
-    sleep(10); // or read when ok
+    sleep(8); // or read when ok
     homing(ctx, device_addr);
     sleep(2); // or read when ok
     return 1;
@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    // printf("\n Homing...\n");
-    // m_home(mb, 1);
+    printf("\n Homing...\n");
+    m_home(mb, 1);
 
     int program_flag = 1;
     while (program_flag == 1)
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
             break;
 
         case 'h':
-            homing(mb, device_addr);
+            m_home(mb, device_addr);
             break;
 
         case 'n':

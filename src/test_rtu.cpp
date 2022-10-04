@@ -9,7 +9,6 @@ int m_open(modbus_t *ctx, int device_addr){
 }
 
 int m_close(modbus_t *ctx, int device_addr){
-    modbus_set_slave(ctx, device_addr);
     move_backwards(ctx, device_addr, open_size);
     sleep(8);
     unlock_when_stopped(ctx, device_addr);

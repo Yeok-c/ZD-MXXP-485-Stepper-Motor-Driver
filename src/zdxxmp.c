@@ -152,6 +152,41 @@ uint32_t read_value(modbus_t *ctx, int device_addr, int reg_addr){
     return value;
 }
 
+
+uint32_t read_pressure(modbus_t *ctx, int device_addr){
+    uint16_t table[2] = {0,0};
+    uint32_t value;
+    int ret, nb;
+    modbus_set_slave(ctx, device_addr);
+
+    // Method 1 - using 0x03 command
+    nb = 2;
+    ret = modbus_read_registers(ctx, 0x01, nb, table);    // Air pressure
+    // ret = modbus_read_registers(ctx, 0x10, nb, table);    // OUT1 Reference
+    // ret = modbus_read_registers(ctx, 0x11, nb, table); // OUT1 Upper limit
+    // ret = modbus_read_registers(ctx, 0x12, nb, table); // OUT1 Lower Limit
+
+    // Method 2 - using 0x04 command
+    // nb = 1;
+    // ret =  modbus_read_input_registers(ctx, 0x01, nb, table);
+
+
+    value = parse_bytes(table, nb);     
+    if(ret != -1)
+        printf("read success : register addr: %d, size = %d byte, value = %d \n", 0x01, nb, value);
+    else
+    {
+        printf("read error: %s\n", modbus_strerror(errno));
+        return ret;
+    }
+    return value;
+}
+
+// D1 Upper 02 
+// D1 Lower 58 
+// D2 Upper 01 
+// D2 Lower 90
+
 float read_fvalue(modbus_t *ctx, int device_addr, int reg_addr){
     uint16_t table[2] = {0,0};
     int ret, nb;

@@ -1,7 +1,7 @@
 #include "zdxxmp.c"
 #include <iostream>
 
-int open_size = 49000; // steps, slightly less than 53838 which is (23 gear reduction)*(360/1.8 step per angle)*(133/360 degrees to turn)
+int open_size = 200000; // steps, slightly less than 53838 which is (23 gear reduction)*(360/1.8 step per angle)*(133/360 degrees to turn)
 int device_addr = 1;
 int m_open(modbus_t *ctx, int device_addr){
     move_forwards(ctx, device_addr, open_size);
@@ -10,10 +10,10 @@ int m_open(modbus_t *ctx, int device_addr){
 
 int m_close(modbus_t *ctx, int device_addr){
     move_backwards(ctx, device_addr, open_size);
-    sleep(8);
-    unlock_when_stopped(ctx, device_addr);
-    sleep(0.5);
-    lock_when_stopped(ctx, device_addr);
+    // sleep(8);
+    // unlock_when_stopped(ctx, device_addr);
+    // sleep(0.5);
+    // lock_when_stopped(ctx, device_addr);
     return 1;
 }
 
@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
         strcpy(port, argv[1]);
     else
         strcpy(port, PORT_NAME);
-    printf("libmodbus modbu-rtu master demo: %s, 9600, N, 8, 1\n", port);
+    printf("libmodbus modbu-rtu master demo: %s, 19200, N, 8, 1\n", port);
 
 
     // modbus_new_rtu(const char *device, int baud, char parity, int data_bit, int stop_bit);
-    mb = modbus_new_rtu(port, 9600, 'N', 8, 1);
+    mb = modbus_new_rtu(port, 19200, 'N', 8, 1);
 
     modbus_set_debug(mb, TRUE);
     modbus_set_response_timeout(mb, 0.5, 0);
@@ -82,8 +82,8 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    printf("\n Homing...\n");
-    m_home(mb, 1);
+    // printf("\n Homing...\n");
+    // m_home(mb, 1);
 
     int program_flag = 1;
     while (program_flag == 1)
@@ -95,7 +95,15 @@ int main(int argc, char *argv[])
 
         switch (x)
         {
-        
+        case '/':
+            printf("Read from pressure sensor");
+            for(device_addr = 18; device_addr < 22; device_addr++){
+                printf("\nREAD PRESSURE Sensor %d: ", device_addr);
+                ret_uint32 = read_pressure(mb, device_addr);
+                writeUInt32ToBufferBigEndian(ret_uint32, buffer_2);
+            }
+            break;
+
         case '1':
             printf("Changing destination of commands sent to 1");
             device_addr=1;
@@ -196,19 +204,19 @@ int main(int argc, char *argv[])
             break;
         case 'w': // Write to registers
             printf("\nWRITE REG_MICROSTEP   : ");
-            ret_status = write_value(mb, device_addr, REG_MICROSTEP, 32);
+            ret_status = write_value(mb, device_addr, REG_MICROSTEP, 16);
             printf("\nWRITE REG_LOCK_MODE   : ");
             ret_status = write_value(mb, device_addr, REG_LOCK_MODE, 0x40); // 0x40 for lock, 0x50 for unlock
             printf("\nWRITE REG_ACC_STEP_H  : ");
-            ret_status = write_value(mb, device_addr, REG_ACC_STEP_H, 1000);
+            ret_status = write_value(mb, device_addr, REG_ACC_STEP_H, 300);
             printf("\nWRITE REG_ACC_PARAM_H : ");
-            ret_status = write_fvalue(mb, device_addr, REG_ACC_PARAM_H, 0.02);
+            ret_status = write_fvalue(mb, device_addr, REG_ACC_PARAM_H, 0.5);
             printf("\nWRITE REG_INIT_PERIOD : ");
-            ret_status = write_value(mb, device_addr, REG_INIT_PERIOD, 500);
+            ret_status = write_value(mb, device_addr, REG_INIT_PERIOD, 50);
             printf("\nWRITE REG_MAX_PERIOD  : ");
-            ret_status = write_value(mb, device_addr, REG_MAX_PERIOD, 150);
+            ret_status = write_value(mb, device_addr, REG_MAX_PERIOD, 20);
             printf("\nWRITE REG_MAX_DIST_H  : ");
-            ret_status = write_value(mb, device_addr, REG_MAX_DIST_H, 52000);
+            ret_status = write_value(mb, device_addr, REG_MAX_DIST_H, 0);
             printf("\nWRITE REG_ZERO_POS_H  : ");
             ret_status = write_value(mb, device_addr, REG_ZERO_POS_H, 0);
             printf("\nWRITE REG_LIM_SW_OFST : ");

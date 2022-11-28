@@ -106,3 +106,7 @@ int lock_when_stopped(modbus_t *ctx, int device_addr);
 int unlock_when_stopped(modbus_t *ctx, int device_addr);
 int flash_parameters(modbus_t *ctx, int device_addr);
 int change_address(modbus_t *ctx, int old_device_addr, int new_device_addr);
+
+
+
+uint32_t read_pressure(modbus_t *ctx, int device_addr);

@@ -1,7 +1,9 @@
 
-# ZD-MXXP-485-Stepper-Motor-Driver
+# ZD-MXXP-485 Stepper Motor Driver
 
-ZD-M42P-485 or ZD-M57P-485 NEMA stepper motor back-mounted drivers controller via RS485 such as [this](https://world.taobao.com/item/634196223214.htm) or [this](https://www.aliexpress.com/item/1005004161246962.html).
+Control NEMA stepper motor drivers with RS485.
+
+Register and functions designed for ZD-M42P-485 or ZD-M57P-485 NEMA stepper motor back-mounted drivers controller via RS485 such as [this](https://world.taobao.com/item/634196223214.htm) or [this](https://www.aliexpress.com/item/1005004161246962.html).
 
 Main contribution is c libraries ```zdmxxp.c``` and ```zdmxxp.h```. 
 

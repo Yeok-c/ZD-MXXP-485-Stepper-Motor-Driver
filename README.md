@@ -3,7 +3,9 @@
 
 Control NEMA stepper motor drivers with RS485.
 
-Register and functions designed for ZD-M42P-485 or ZD-M57P-485 NEMA stepper motor back-mounted drivers controller via RS485 such as [this](https://world.taobao.com/item/634196223214.htm) or [this](https://www.aliexpress.com/item/1005004161246962.html).
+Register and functions designed for ZD-M42P-485 or ZD-M57P-485 NEMA stepper motor back-mounted drivers controller via RS485 such as [CAN總線步進馬達驅動器控制器RS485接口42/57型微小型驅動控制器
+](https://world.taobao.com/item/634196223214.htm) or [57 integrated stepper motor driver module controller with cooling shell 485CAN pulse control mode
+](https://www.aliexpress.com/item/1005004161246962.html).
 
 Main contribution is c libraries ```zdmxxp.c``` and ```zdmxxp.h```. 
 
@@ -47,4 +49,3 @@ The core modbus libraries are forked from [libmodbus](https://github.com/stephan
 
 ## Build
 To build, G++ (and Gcc) is required. Makefile so just run terminal command  ```make``` in ```./ZD-MXXP-485-Stepper-Motor-Driver/src```
-
